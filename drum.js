@@ -6,20 +6,37 @@ const paints = {
   yellow:['#fff6b6','#ffd02d','#cf8906'], green:['#a1f6c1','#17ac64','#086e3b'],
   blue:['#a0cdff','#1761ef','#06318e'], purple:['#d9baff','#854ce6','#44218f']
 };
+export class SpinMotor {
+  constructor(){this.remaining=0;this.speed=0;this.turns=0;}
+  kick(){this.remaining=Math.min(this.remaining+Math.PI*3,Math.PI*40);this.speed=Math.max(this.speed,3);this.turns++;}
+  step(dt){
+    if(this.remaining<=0){this.speed=0;return 0;}
+    const target=Math.min(11,Math.sqrt(5*this.remaining));
+    this.speed=Math.min(this.speed+dt*18,target);
+    const advance=Math.min(this.remaining,this.speed*dt);
+    this.remaining-=advance;
+    if(this.remaining<.008){this.remaining=0;this.speed=0;}
+    return advance;
+  }
+  get running(){return this.remaining>0;}
+}
 export class DrumModel {
-  constructor(called = []) { this.angle = 0; this.reset(called); }
-  reset(called = []) {
+  constructor(called = [],total=90) { this.total=total;this.angle = 0; this.reset(called,total); }
+  reset(called = [],total=this.total) {
+    this.total=total;
     const positions = [];
     for (let y = 145, row = 0; y >= -150; y -= 21, row++) for (let x = -155 + (row%2)*12; x <= 155; x += 24) {
       if (x*x+y*y < 154*154) positions.push({x,y});
     }
-    this.balls = Array.from({length:90},(_,i)=>i+1).filter(n=>!called.includes(n)).map((n,i)=>({ n, ...positions[i], vx:0, vy:0, rotation:n*.3 }));
+    this.balls = Array.from({length:total},(_,i)=>i+1).filter(n=>!called.includes(n)).map((n,i)=>({ n, ...positions[i], vx:0, vy:0, rotation:n*.3 }));
   }
   remove(n) { const i = this.balls.findIndex(b=>b.n===n); return i === -1 ? null : this.balls.splice(i,1)[0]; }
   step(dt, mixing) {
     dt = Math.min(dt,1/30);
-    this.angle += dt*(mixing?2.5:.025);
+    const angularSpeed=typeof mixing==='number'?mixing:mixing?2.5:0;
+    this.angle += dt*angularSpeed;
     for (const b of this.balls) {
+      if(angularSpeed>.1){const angle=dt*angularSpeed*.68,cos=Math.cos(angle),sin=Math.sin(angle),x=b.x;b.x=x*cos-b.y*sin;b.y=x*sin+b.y*cos;b.rotation+=angle;}
       // Gravity, wall friction and an upward scoop produce tumbling, not an orbit.
       b.vy += 260*dt;
       if (mixing) {
@@ -57,8 +74,8 @@ export class DrumModel {
   }
 }
 export class DrumRenderer {
-  constructor(canvas,called,reducedMotion) {
-    this.canvas=canvas;this.ctx=canvas.getContext('2d');this.model=new DrumModel(called);
+  constructor(canvas,called,reducedMotion,total=90) {
+    this.canvas=canvas;this.ctx=canvas.getContext('2d');this.model=new DrumModel(called,total);this.motor=new SpinMotor();
     this.reducedMotion=reducedMotion;this.mixing=false;this.active=false;this.frame=null;this.exiting=null;
     const dpr=Math.min(window.devicePixelRatio||1,2);
     canvas.width=600*dpr;canvas.height=520*dpr;this.ctx.scale(dpr,dpr);
@@ -66,10 +83,13 @@ export class DrumRenderer {
   }
   setActive(active) { this.active=active; if(active&&!this.frame) {this.last=performance.now();this.frame=requestAnimationFrame(t=>this.tick(t));} if(!active&&this.frame) {cancelAnimationFrame(this.frame);this.frame=null;} }
   tick(t) {
-    if(!this.reducedMotion)this.model.step(Math.min((t-this.last)/1000,1/30),this.mixing);this.last=t;this.paint(t);
+    const elapsed=Math.min((t-this.last)/1000,.12),dt=Math.min(elapsed,1/30),advance=this.motor.step(elapsed);
+    if(!this.reducedMotion)this.model.step(dt,dt?advance/dt:0);this.last=t;this.paint(t);
+    this.canvas.dataset.spinning=String(this.motor.running);this.canvas.dataset.turns=String(this.motor.turns);
     this.frame=this.active?requestAnimationFrame(time=>this.tick(time)):null;
   }
-  reset(called) {this.model.reset(called);this.exiting=null;this.paint();this.describe();}
+  kick(){this.motor.kick();}
+  reset(called,total=this.model.total) {this.model.reset(called,total);this.motor=new SpinMotor();this.exiting=null;this.paint();this.describe();}
   extract(n) { const ball=this.model.remove(n);if(ball)this.exiting={...ball,start:performance.now()};this.describe();return ball; }
   describe() {this.canvas.setAttribute('aria-label',`Bombo con ${this.model.balls.length} pelotas: ${this.model.balls.map(b=>b.n).join(', ')}`);this.canvas.dataset.ballCount=String(this.model.balls.length);}
   ball(b,x,y,r=11.4) {
@@ -105,6 +125,6 @@ export class DrumRenderer {
     c.save();c.translate(481,218);c.rotate(this.model.angle);c.strokeStyle='#718aad';c.lineWidth=7;c.beginPath();c.moveTo(0,0);c.lineTo(27,0);c.lineTo(27,43);c.stroke();const handle=c.createLinearGradient(15,0,41,0);handle.addColorStop(0,'#ff9da1');handle.addColorStop(.5,'#ed3545');handle.addColorStop(1,'#a11123');c.fillStyle=handle;c.beginPath();c.roundRect(16,30,23,37,10);c.fill();c.restore();
     // Exit gate and chute; extraction is a single real particle leaving the drum.
     c.fillStyle='#7898be';c.beginPath();c.roundRect(280,391,40,14,5);c.fill();c.strokeStyle='#c0d3ed';c.lineWidth=4;c.beginPath();c.moveTo(286,402);c.lineTo(286,437);c.quadraticCurveTo(300,451,314,437);c.lineTo(314,402);c.stroke();
-    if(this.exiting) {const p=Math.min((t-this.exiting.start)/550,1),b=this.exiting;this.ball(b,300+b.x*(1-p),218+b.y*(1-p)+220*p,11.4);}
+    if(this.exiting) {const p=Math.min((t-this.exiting.start)/1050,1),b=this.exiting,q=Math.min(p/.48,1);this.ball(b,300+b.x*(1-q),p<.48?218+b.y*(1-q)+163*q:381+65*((p-.48)/.52)**2,11.4);}
   }
 }

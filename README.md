@@ -1,66 +1,53 @@
-# Bingo Bongo ✳
+# Bingo Bongo ✦
 
-Bingo de **90 bolas** para reunirse: el sorteo en la computadora y el cartón en el celular. Colores del arcoíris, pelotas con relieve, un bombo con 90 partículas y pantallas de juego sin desplazamiento.
+Bingo de **75 y 90 bolas**: el bombo en la computadora y hasta seis cartones confirmados en cada celular.
 
 **Jugar:** https://joaqx3wa.github.io/Bingo-Bongo/
 
-## Cómo jugar
+## El sorteo
 
-1. En el inicio, elige **Jugar bingo** en la computadora. Pulsa **Invitar** para mostrar el QR.
-2. Cada jugador elige **Sacar cartilla** en su celular. Puede generar hasta 6 cartones y elegir uno. **Jugar con este cartón** abre únicamente el cartón seleccionado, grande y con el logo en una esquina.
-3. El anfitrión pulsa **¡Girar el bombo!** o la barra espaciadora. También puede usar el sorteo automático con intervalos de 5, 8 o 12 segundos.
-4. Los jugadores miran la pantalla principal o escuchan los números y los marcan manualmente en sus celulares.
-5. Una fila completa es **línea**. Los 15 números del cartón son **bingo**. El anfitrión pulsa **¡BINGO!**, comprueba el código del cartón y confirma para finalizar.
+Elige **Jugar bingo** y la modalidad antes de sacar la primera bola. Cada clic en **Girar el bombo** añade impulso: la jaula y sus pelotas siguen girando y frenan hasta detenerse. Luego una sola pelota sale por la ranura. La pelota grande se conserva sobre el fondo difuminado hasta hacer clic fuera, o pulsar Escape o Enter; después vuela al tablero. En modo automático, el siguiente turno se programa después de cerrar esa presentación.
 
-Cada cartón tiene 3 filas, 9 columnas, 15 números únicos y 5 números por fila. Los números se ordenan de arriba abajo en sus columnas: 1–9, 10–19, …, 80–90. No se repiten bolas durante un sorteo.
+El bombo contiene una partícula por cada número aún disponible. No repite bolas y conserva el sorteo al recargar. Las opciones permiten comenzar otro sorteo. **Invitar** comparte un QR con la modalidad elegida. Los sonidos del sorteo se activan con ♫. Al confirmar **¡BINGO!**, se reproduce una fanfarria y aparece confeti; el navegador y el volumen del dispositivo deben permitir audio.
 
-## Funciones
+## Elegir y confirmar cartones
 
-- Bombo de jaula con manivela, 90 pelotas individuales, gravedad, rebotes, mezcla y salida de una pelota por extracción. El número de pelotas disminuye con el sorteo.
-- Cada bola extraída aparece grande sobre un fondo difuminado y después se desplaza a su lugar en el tablero de pelotas. Última bola destacada e historial por orden de salida.
-- Sonidos sintetizados y anuncio de números en español cuando el navegador dispone de voz compatible. El sonido se activa con el botón ♫.
-- Sorteo automático, pausa al cambiar de pestaña, pantalla completa y celebración al finalizar.
-- Cartones reproducibles con código de 10 caracteres y enlace/QR individual.
-- Marcas, cartones y sorteo conservados en el almacenamiento local del navegador.
-- Impresión del cartón elegido desde el menú ⋯ de la selección. La impresión omite las marcas para reutilizarlo.
-- Inicio, selector y cartón a pantalla completa; diseño para celular vertical, horizontal y computadora, navegación por teclado y respeto por movimiento reducido.
-- App instalable con manifiesto, iconos y service worker. Recursos guardados para jugar sin conexión después de la primera carga completa.
+1. En **Sacar cartilla**, elige el formato del mismo sorteo: **90 bolas · 3 × 9** o **75 bolas · BINGO 5 × 5**.
+2. Usa las flechas o **Cambiar cartón** para explorar candidatos.
+3. Pulsa **Seleccionar cartón** cuando encuentres uno que te guste.
+4. Pulsa **Añadir otro cartón** para buscar y seleccionar otro. Puedes elegir hasta seis. Antes de confirmar puedes revisar y quitar los seleccionados.
+5. Pulsa **Confirmar y jugar** y confirma el conjunto. Esos cartones quedan bloqueados durante la participación y se guardan al recargar o cerrar el navegador. No es posible añadir, sustituir o quitar cartones mientras la participación esté activa.
 
-**Los dispositivos no se sincronizan en tiempo real.** El anfitrión controla el sorteo en la pantalla compartida; cada persona marca su propio cartón. El botón de bingo del anfitrión finaliza esa partida. Al iniciar otra, cada jugador debe limpiar sus marcas. Los cartones generados al azar no son una tira de seis con cobertura garantizada de los 90 números. Los códigos sirven para verificar números; no son un sistema antifraude ni un registro de quién recibió cada cartón.
+En la pantalla de juego, alterna entre tus cartones mediante las pestañas numeradas o las flechas. Al marcar o desmarcar un número, se aplica a **todos los cartones confirmados que tengan ese número**. La vista de juego se gira mediante CSS si el dispositivo está vertical, manteniendo el diseño horizontal sin depender del bloqueo de orientación del sistema.
 
-## Instalar en el celular
+El menú ⋯ permite compartir o imprimir el cartón visible. **Terminar mi participación** requiere confirmación, finaliza ese conjunto y limpia sus marcas para preparar una participación nueva. No interrumpe el sorteo del anfitrión.
 
-Pulsa **Instalar app**. En navegadores compatibles se abre el diálogo nativo cuando está disponible. En los demás se muestran los pasos para instalarla desde el menú. En iPhone, abre en Safari, toca **Compartir → Añadir a pantalla de inicio**. La instalación final requiere la acción del usuario en su navegador.
+## Formatos y premios
 
-La app instalada abre sin la barra del navegador. El soporte y la opción exacta dependen del navegador. Para compartir invitaciones con otros dispositivos necesitas la dirección publicada; jugar y marcar funcionan sin conexión una vez almacenados los recursos. Los datos conservan el almacenamiento local del navegador correspondiente.
+- **90 bolas:** tres filas, nueve columnas y quince números únicos; cinco números por fila y al menos uno por columna. Rangos 1–9, 10–19, …, 80–90. Línea: una fila completa. Bingo: los quince números.
+- **75 bolas:** cinco filas y cinco columnas con cabecera B I N G O. Rangos 1–15, 16–30, 31–45, 46–60, 61–75. Centro libre y veinticuatro números únicos. Se detectan filas, columnas y diagonales completas como línea. El verificador de bingo completo exige los veinticuatro números.
 
-## Publicar en GitHub Pages
+El anfitrión comprueba el código de diez caracteres del cartón con la misma modalidad. Los cartones son reproducibles a partir del código; el código no es un registro de entrega ni un mecanismo antifraude. Los cartones de 90 bolas generados individualmente no forman una tira de seis con cobertura garantizada de los noventa números.
 
-Es una web estática: no requiere servidor, claves ni base de datos.
+**Los dispositivos no se sincronizan en vivo.** Los jugadores siguen el sorteo de la pantalla principal y marcan manualmente. El bloqueo y las marcas compartidas corresponden a los cartones de ese navegador. El anfitrión finaliza su sorteo y cada jugador termina su participación desde su propio menú para preparar la siguiente.
 
-1. En el repositorio, abre **Settings → Pages**.
-2. En **Build and deployment**, selecciona **Deploy from a branch**.
-3. Selecciona **main** y **/ (root)** y guarda.
-4. GitHub mostrará la dirección publicada, normalmente `https://joaqx3wa.github.io/Bingo-Bongo/`.
+## Instalar y jugar sin conexión
 
-Los archivos usan rutas relativas y funcionan bajo el subdirectorio del repositorio. Los QR usan la dirección desde la que se abre la web; compártelos desde la página publicada.
+No hay un botón de instalación dentro de la página. Se conserva el manifiesto, los iconos y el service worker para instalarla desde el **menú del navegador**. En iPhone: **Safari → Compartir → Añadir a pantalla de inicio**. La opción exacta depende del navegador.
 
-## Desarrollo
+Después de una carga completa, los recursos necesarios se guardan para funcionar sin conexión. Los QR se comparten desde la dirección publicada. Los datos se conservan en el almacenamiento local y se pierden al borrar los datos del navegador.
 
-Requiere Node.js 20 o posterior, sin instalar dependencias:
+## Publicación y desarrollo
+
+Es una web estática sin claves, cuentas ni base de datos. GitHub Pages publica `main` desde la raíz. Todos los recursos usan rutas relativas bajo `/Bingo-Bongo/`.
+
+Con Node.js 20 o posterior, sin instalar dependencias:
 
 ```sh
-npm start
+node server.mjs
+node --test tests/*.test.mjs
 ```
 
-Abre `http://localhost:4173`. Para probar desde otro dispositivo en tu red, usa la IP local de la computadora y permite el puerto 4173 si tu firewall lo solicita. El enlace localhost solo funciona en la computadora que ejecuta el servidor.
+Abre `http://localhost:4173`. Las pruebas cubren 10.000 cartones de 90 bolas, 3.000 de 75 bolas, sorteos sin repeticiones, conservación de pelotas, acumulación y frenado del giro, sesiones confirmadas, marcas comunes, premios, iconos y recursos sin conexión.
 
-```sh
-npm test
-```
-
-Las pruebas validan 10.000 cartones, el sorteo completo sin repeticiones, los premios, la recuperación de estado, la conservación de partículas en el bombo, los iconos de instalación y los recursos sin conexión. También se revisan los recorridos de juego y el ajuste a pantallas pequeñas en el navegador.
-
-## Privacidad y dependencias
-
-No hay cuentas, analítica ni servidor de juego. Los datos se almacenan en este navegador y se pierden al borrar sus datos. Compartir un cartón comparte sus números, pero no sus marcas. Las tipografías son del sistema y todos los recursos necesarios están en el repositorio. El generador QR se incluye localmente en `vendor/` bajo licencia MIT, incluida junto al archivo. El service worker limita su caché a esta aplicación para no interferir con otros sitios del mismo dominio de GitHub Pages.
+Las tipografías y los sonidos son locales. No hay analítica. El generador QR se incluye en `vendor/` bajo licencia MIT. El service worker limita su caché a esta aplicación y respeta otros sitios del mismo dominio. Se respeta la preferencia de movimiento reducido: las partículas se muestran sin movimiento y el confeti como decoración estática.

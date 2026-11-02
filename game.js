@@ -9,8 +9,8 @@ export function shuffled(values, random = Math.random) {
   }
   return result;
 }
-export function nextBall(called, random = Math.random) {
-  const available = Array.from({ length: TOTAL }, (_, i) => i + 1).filter(n => !called.includes(n));
+export function nextBall(called, random = Math.random, total = TOTAL) {
+  const available = Array.from({ length: total }, (_, i) => i + 1).filter(n => !called.includes(n));
   return available.length ? available[randomInt(available.length, random)] : null;
 }
 export function seededRandom(seed) {
@@ -23,7 +23,12 @@ export function seededRandom(seed) {
     return ((t ^ t >>> 14) >>> 0) / 4294967296;
   };
 }
-export function makeCard(id) {
+export function makeCard(id, mode = 90) {
+  if (mode === 75) {
+    const random = seededRandom('75:' + id);
+    const columns = Array.from({length:5},(_,c)=>shuffled(Array.from({length:15},(_,i)=>c*15+i+1),random).slice(0,5));
+    return Array.from({length:5},(_,r)=>Array.from({length:5},(_,c)=>r===2&&c===2?null:columns[c][r]));
+  }
   const random = seededRandom(id);
   let occupied;
   // Each row has five cells; every column must contain at least one number.
@@ -42,14 +47,21 @@ export function makeCard(id) {
 }
 export function cardProgress(card, marked) {
   const numbers = card.flat().filter(n => n !== null);
+  const complete = cells => cells.every(n=>n===null||marked.includes(n));
+  const lines = [...card];
+  if(card.length===5){
+    for(let c=0;c<5;c++)lines.push(card.map(row=>row[c]));
+    lines.push(card.map((row,r)=>row[r]),card.map((row,r)=>row[4-r]));
+  }
   return {
     count: numbers.filter(n => marked.includes(n)).length,
-    line: card.some(row => row.filter(n => n !== null).every(n => marked.includes(n))),
+    line: lines.some(complete),
     bingo: numbers.every(n => marked.includes(n))
   };
 }
 export function validHostState(value) {
-  return value && Array.isArray(value.called) && value.called.length <= TOTAL &&
-    value.called.every(n => Number.isInteger(n) && n >= 1 && n <= TOTAL) &&
+  const total=value?.mode===75?75:90;
+  return value && (value.mode===undefined||value.mode===75||value.mode===90) && Array.isArray(value.called) && value.called.length <= total &&
+    value.called.every(n => Number.isInteger(n) && n >= 1 && n <= total) &&
     new Set(value.called).size === value.called.length && typeof value.ended === 'boolean';
 }
