@@ -5,9 +5,11 @@ const $ = id => document.getElementById(id);
 const HOST_KEY='bingo-bongo:90:host';
 const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-let storageWarning=false,toastTimer,autoTimer,confettiTimer,spinning=false,soundOn=false,audioContext,activeView='home',phase='idle';
+let storageWarning=false,toastTimer,autoTimer,confettiTimer,spinning=false,soundOn=true,narratorOn=false,audioContext,activeView='home',phase='idle';
 function read(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}}
 function save(key,value){try{localStorage.setItem(key,JSON.stringify(value));}catch{if(!storageWarning){storageWarning=true;toast('No se pudo guardar. Mantén la página abierta para conservar tu juego.');}}}
+const AUDIO_KEY='bingo-bongo:audio:v1';
+const audioPrefs=read(AUDIO_KEY,{});soundOn=typeof audioPrefs.effects==='boolean'?audioPrefs.effects:true;narratorOn=audioPrefs.narrator===true;
 let host=read(HOST_KEY,{called:[],ended:false});if(!validHostState(host))host={called:[],ended:false};
 host.mode=host.mode===75?75:90;
 const total=()=>host.mode;
@@ -22,7 +24,7 @@ $('close-modal').onclick=closeModal;
 $('modal').addEventListener('click',e=>{if(e.target===$('modal')){const r=$('modal').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeModal();}});
 function sphere(n,extra=''){return `<div class="sphere ball-${colorFor(n)} ${extra}"><span>${n}</span></div>`;}
 
-// Audio is generated on the device, and enabled only by the sound button.
+// Effects default to on. Browsers unlock audio on the first user interaction.
 function tone(frequency,duration=.12,delay=0,type='sine',volume=.07){
   if(!soundOn||!audioContext)return;
   const osc=audioContext.createOscillator(),gain=audioContext.createGain(),start=audioContext.currentTime+delay;
@@ -30,8 +32,17 @@ function tone(frequency,duration=.12,delay=0,type='sine',volume=.07){
   osc.connect(gain);gain.connect(audioContext.destination);osc.start(start);osc.stop(start+duration+.02);
 }
 function chime(){[523.25,659.25,783.99,1046.5].forEach((n,i)=>tone(n,.35,i*.13));}
-function announce(n){if(!soundOn||!('speechSynthesis'in window))return;speechSynthesis.cancel();const message=new SpeechSynthesisUtterance(String(n));message.lang='es-ES';message.rate=.88;const voice=speechSynthesis.getVoices().find(v=>v.lang.startsWith('es'));if(voice)message.voice=voice;speechSynthesis.speak(message);}
-$('sound').onclick=async()=>{if(!soundOn){try{audioContext ||= new (window.AudioContext||window.webkitAudioContext)();await audioContext.resume();}catch{toast('Este navegador no permite reproducir sonidos.');return;}}soundOn=!soundOn;$('sound').setAttribute('aria-pressed',String(soundOn));$('sound').setAttribute('aria-label',soundOn?'Silenciar sonidos':'Activar sonidos');if(soundOn){tone(660);toast('Sonidos activados. ¡Que se escuche la suerte!');}else if('speechSynthesis'in window)speechSynthesis.cancel();};
+function announce(n){if(!narratorOn||!('speechSynthesis'in window))return;speechSynthesis.cancel();const message=new SpeechSynthesisUtterance(String(n));message.lang='es-ES';message.rate=.88;const voice=speechSynthesis.getVoices().find(v=>v.lang.startsWith('es'));if(voice)message.voice=voice;speechSynthesis.speak(message);}
+async function ensureAudio(){try{audioContext ||= new (window.AudioContext||window.webkitAudioContext)();if(audioContext.state!=='running')await audioContext.resume();return true;}catch{return false;}}
+function renderAudio(){
+  $('sound').setAttribute('aria-pressed',String(soundOn));$('sound').setAttribute('aria-label',soundOn?'Silenciar efectos de sonido':'Activar efectos de sonido');$('sound').title=soundOn?'Efectos activados':'Efectos silenciados';
+  $('narrator').setAttribute('aria-pressed',String(narratorOn));$('narrator').setAttribute('aria-label',narratorOn?'Desactivar narrador de números':'Activar narrador de números');$('narrator').title=narratorOn?'Narrador activado':'Narrador desactivado';
+}
+function saveAudio(){save(AUDIO_KEY,{effects:soundOn,narrator:narratorOn});renderAudio();}
+$('sound').onclick=async()=>{soundOn=!soundOn;saveAudio();if(soundOn){if(await ensureAudio())tone(660);else toast('No se pudo reproducir audio en este navegador.');}};
+$('narrator').onclick=()=>{if(!('speechSynthesis'in window)){toast('Este navegador no incluye narrador de voz.');return;}narratorOn=!narratorOn;saveAudio();if(!narratorOn)speechSynthesis.cancel();else announce('Narrador activado');};
+for(const event of ['pointerdown','keydown'])document.addEventListener(event,()=>{if(soundOn&&audioContext?.state!=='running')void ensureAudio();},{capture:true});
+renderAudio();
 
 const cells=[];
 function buildBoard(){cells.length=0;$('number-board').replaceChildren();$('number-board').dataset.mode=total();for(let n=1;n<=total();n++){const el=document.createElement('span');el.id='board-ball-'+n;el.className='board-ball';el.innerHTML='<span>'+n+'</span>';$('number-board').append(el);cells.push(el);}document.querySelector('.board-heading>div>span').textContent='/ '+total();$('host-mode').value=total();document.querySelector('.machine-panel').setAttribute('aria-label','Bombo de '+total()+' bolas');}
@@ -44,8 +55,8 @@ function renderHost(pending=null){
   $('remaining').textContent=`${total()-host.called.length} bolas por salir`;
   $('drum-count').textContent=`${total()-host.called.length} dentro`;
   $('game-status').textContent=spinning?'LA SUERTE ESTÁ GIRANDO…':host.ended?'PARTIDA FINALIZADA':host.called.length===total()?'SALIERON LAS '+total()+' BOLAS':latest?'LA SUERTE ESTÁ EN JUEGO':'TODO LISTO PARA EMPEZAR';
-  $('draw').disabled=(spinning&&phase!=='mixing')||host.ended||host.called.length===total();
-  $('draw-label').textContent=spinning?(phase==='mixing'?'¡Más clics, más giros!':'¡Ahí viene la suerte!'):host.ended?'Partida finalizada':host.called.length===total()?'Las '+total()+' están fuera':'¡Girar el bombo!';
+  $('draw').disabled=(spinning&&phase!=='mixing')||(!host.ended&&host.called.length===total());$('new-round').disabled=spinning;$('restart-round').disabled=spinning||!host.called.length;
+  $('draw-label').textContent=spinning?(phase==='mixing'?'¡Más clics, más giros!':'¡Ahí viene la suerte!'):host.ended?'¡Nueva partida!':host.called.length===total()?'Las '+total()+' están fuera':'¡Girar el bombo!';
   $('bingo').disabled=spinning||host.ended||!host.called.length;
   $('auto').disabled=host.ended||host.called.length===total();
   $('host-settings').disabled=spinning;$('host-mode').disabled=spinning||(!host.ended&&host.called.length>0);
@@ -63,6 +74,7 @@ async function presentBall(n){
   overlay.hidden=true;overlay.classList.remove('flying');$('app-shell').inert=false;
 }
 async function draw(){
+  if(host.ended){confirmNewGame();return;}
   if(host.ended||host.called.length>=total()||activeView!=='host'||$('modal').open)return;
   if(spinning){if(phase==='mixing'){drum.kick();tone(210,.07);$('game-status').textContent='¡MÁS IMPULSO! '+drum.motor.turns+' CLICS';}return;}
   clearTimeout(autoTimer);spinning=true;phase='mixing';document.body.classList.add('busy');drum.motor.turns=0;drum.kick();renderHost();
@@ -78,8 +90,14 @@ document.addEventListener('visibilitychange',()=>{drum.setActive(activeView==='h
 document.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat&&activeView==='host'&&!$('modal').open&&(e.target===document.body||e.target===document.documentElement)){e.preventDefault();draw();}});
 async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();else toast('Instala la app para jugar sin la barra del navegador.');}catch{toast('Puedes instalar la app para verla en toda la pantalla.');}}
 $('fullscreen').onclick=fullscreen;$('play-fullscreen').onclick=fullscreen;
-$('host-settings').onclick=()=>{openModal('<span class="modal-icon">⚙</span><h2>A tu ritmo.</h2><p>El sorteo y los cartones se guardan en este navegador. El modo automático se pausa al salir del sorteo.</p><div class="settings-actions"><button id="new-game" class="secondary-button">↻ Empezar una nueva partida</button><button id="settings-help" class="secondary-button">? Cómo jugar</button></div>');$('new-game').onclick=confirmNewGame;$('settings-help').onclick=showHelp;};
-function confirmNewGame(){openModal('<span class="modal-icon">↻</span><h2>¿Otra vuelta de suerte?</h2><p>El bombo volverá a tener todas sus bolas. Los jugadores deben limpiar sus marcas antes de la nueva partida.</p><div class="modal-actions"><button id="cancel-reset" class="secondary-button">Cancelar</button><button id="confirm-reset" class="dark-button">Nueva partida</button></div>');$('cancel-reset').onclick=closeModal;$('confirm-reset').onclick=()=>{host={called:[],ended:false,mode:total()};persistHost();drum.reset([],total());buildBoard();renderHost();closeModal();toast('Bombo listo. Los jugadores pueden iniciar una nueva participación.');};}
+$('new-round').onclick=()=>confirmNewGame();$('restart-round').onclick=()=>confirmNewGame(true);
+$('host-settings').onclick=()=>{openModal('<span class="modal-icon">⚙</span><h2>A tu ritmo.</h2><p>Los efectos y el narrador se controlan por separado. Los efectos están activados por defecto y suenan desde la primera interacción.</p><div class="settings-actions"><button id="settings-help" class="secondary-button">? Cómo jugar</button></div>');$('settings-help').onclick=showHelp;};
+function confirmNewGame(restart=false){
+  if(spinning)return;
+  openModal('<span class="modal-icon">↻</span><h2>'+(restart?'¿Reiniciar esta partida?':'Comenzar otra partida.')+'</h2><p>'+(restart?'Se borrarán las bolas sorteadas y el bombo volverá a estar lleno, con la misma modalidad.':'Comenzarás un sorteo vacío. Elige la modalidad para la nueva partida.')+'</p>'+(restart?'':'<label class="eyebrow" for="new-round-mode">MODALIDAD</label><select id="new-round-mode" class="round-mode"><option value="90">90 bolas</option><option value="75">75 bolas · BINGO</option></select>')+'<p class="setting-note">Cada jugador debe terminar su participación anterior y preparar sus cartones en su propio celular. El sorteo no está conectado a sus dispositivos.</p><div class="modal-actions"><button id="cancel-reset" class="secondary-button">Cancelar</button><button id="confirm-reset" class="dark-button">'+(restart?'Reiniciar partida':'Comenzar partida')+'</button></div>');
+  if(!restart)$('new-round-mode').value=total();
+  $('cancel-reset').onclick=closeModal;$('confirm-reset').onclick=()=>{const mode=restart?total():Number($('new-round-mode').value);stopAuto();host={called:[],ended:false,mode};persistHost();drum.reset([],mode);buildBoard();renderHost();closeModal();tone(660,.16);toast(restart?'Partida reiniciada. Bombo lleno y tablero vacío.':'Nueva partida lista. ¡Que gire la suerte!');};
+}
 function confetti(){
   clearTimeout(confettiTimer);const layer=$('confetti');($('modal').open?$('modal'):document.body).append(layer);layer.replaceChildren();
   for(let i=0;i<150;i++){const el=document.createElement('i');el.className='confetto';el.style.cssText='left:'+Math.random()*100+'%;background:'+['#ed3545','#ffc629','#16a15e','#1761ef','#854ce6'][i%5]+';animation-delay:'+Math.random()*2+'s;animation-duration:'+(4+Math.random()*3)+'s;--drift:'+(Math.random()-.5)*400+'px;border-radius:'+(i%3===0?'50%':'2px');if(reducedMotion){el.style.animation='none';el.style.top=Math.random()*100+'%';el.style.transform='rotate('+Math.random()*180+'deg)';}layer.append(el);}
@@ -104,7 +122,7 @@ $('help').onclick=showHelp;
 if('serviceWorker'in navigator)window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{console.info('Bingo Bongo: modo sin conexión no disponible en este navegador.');});});
 
 const player=setupPlayer({$,read,save,toast,openModal,closeModal,tone,chime,confetti,showInvite});
-async function celebrationSound(){try{audioContext ||= new (window.AudioContext||window.webkitAudioContext)();await audioContext.resume();const previous=soundOn;soundOn=true;[523,659,784,1046,1318].forEach((n,i)=>tone(n,.6,i*.13,'triangle',.13));[262,330,392,523].forEach((n,i)=>tone(n,.8,.7+i*.12,'sine',.1));soundOn=previous;}catch{}}
+async function celebrationSound(){if(!soundOn||!await ensureAudio())return;[523,659,784,1046,1318].forEach((n,i)=>tone(n,.6,i*.13,'triangle',.13));[262,330,392,523].forEach((n,i)=>tone(n,.8,.7+i*.12,'sine',.1));}
 $('host-mode').onchange=()=>{if(spinning||(!host.ended&&host.called.length)){ $('host-mode').value=total();return;}const mode=Number($('host-mode').value);host={called:[],ended:false,mode};persistHost();drum.reset([],mode);buildBoard();renderHost();};
 function route(){
   if(spinning){history.replaceState(null,'','#host');return;}
