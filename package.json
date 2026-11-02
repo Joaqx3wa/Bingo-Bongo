@@ -1,6 +1,6 @@
 {
   "name": "bingo-bongo",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "description": "Bingo de 90 bolas con sorteo animado y cartones para el celular.",
