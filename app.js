@@ -1,11 +1,14 @@
-import { nextBall, makeCard, cardProgress, validHostState } from './game.js';
-import { DrumRenderer, colorFor } from './drum.js';
-import { setupPlayer } from './player-ui.js';
+import { nextBall, makeCard, cardProgress, validHostState } from './game.js?v=4';
+import { colorFor } from './drum.js?v=4';
+import { DrumRenderer } from './drum-3d.js?v=4';
+import { SpinAudio } from './spin-audio.js?v=4';
+import { setupPlayer } from './player-ui.js?v=4';
 const $ = id => document.getElementById(id);
 const HOST_KEY='bingo-bongo:90:host';
-const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let reducedMotion=read('bingo-bongo:soft-motion',false)===true;
+document.body.dataset.motion=reducedMotion?'soft':'full';
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-let storageWarning=false,toastTimer,autoTimer,confettiTimer,spinning=false,soundOn=true,narratorOn=false,audioContext,activeView='home',phase='idle';
+let storageWarning=false,toastTimer,autoTimer,confettiTimer,spinning=false,soundOn=true,narratorOn=false,audioContext,spinAudio,activeView='home',phase='idle';
 function read(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}}
 function save(key,value){try{localStorage.setItem(key,JSON.stringify(value));}catch{if(!storageWarning){storageWarning=true;toast('No se pudo guardar. Mantén la página abierta para conservar tu juego.');}}}
 const AUDIO_KEY='bingo-bongo:audio:v1';
@@ -18,7 +21,7 @@ function toast(message){$('toast').textContent=message;$('toast').classList.add(
 function persistHost(){save(HOST_KEY,host);}
 
 function stopAuto(){clearTimeout(autoTimer);autoTimer=null;$('auto').checked=false;}
-function openModal(content){stopAuto();$('modal-content').innerHTML=content;if(!$('modal').open)$('modal').showModal();}
+function openModal(content){stopAuto();$('modal-content').innerHTML=content;if(!$('modal').open)$('modal').showModal();$('modal').animate([{opacity:0},{opacity:1}],{duration:200});$('modal-content').animate([{opacity:0,transform:'translateY(22px) scale(.92)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:reducedMotion?160:360,easing:'cubic-bezier(.2,.9,.3,1.1)'});}
 function closeModal(){$('modal').close();}
 $('close-modal').onclick=closeModal;
 $('modal').addEventListener('click',e=>{if(e.target===$('modal')){const r=$('modal').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeModal();}});
@@ -39,7 +42,7 @@ function renderAudio(){
   $('narrator').setAttribute('aria-pressed',String(narratorOn));$('narrator').setAttribute('aria-label',narratorOn?'Desactivar narrador de números':'Activar narrador de números');$('narrator').title=narratorOn?'Narrador activado':'Narrador desactivado';
 }
 function saveAudio(){save(AUDIO_KEY,{effects:soundOn,narrator:narratorOn});renderAudio();}
-$('sound').onclick=async()=>{soundOn=!soundOn;saveAudio();if(soundOn){if(await ensureAudio())tone(660);else toast('No se pudo reproducir audio en este navegador.');}};
+$('sound').onclick=async()=>{soundOn=!soundOn;saveAudio();if(!soundOn){spinAudio?.stop();spinAudio=null;$('drum').dataset.spinAudio='muted';}if(soundOn){if(await ensureAudio())tone(660);else toast('No se pudo reproducir audio en este navegador.');}};
 $('narrator').onclick=()=>{if(!('speechSynthesis'in window)){toast('Este navegador no incluye narrador de voz.');return;}narratorOn=!narratorOn;saveAudio();if(!narratorOn)speechSynthesis.cancel();else announce('Narrador activado');};
 for(const event of ['pointerdown','keydown'])document.addEventListener(event,()=>{if(soundOn&&audioContext?.state!=='running')void ensureAudio();},{capture:true});
 renderAudio();
@@ -66,7 +69,7 @@ function scheduleAuto(){clearTimeout(autoTimer);if($('auto').checked&&!host.ende
 async function presentBall(n){
   const overlay=$('draw-reveal'),ball=$('reveal-ball');phase='revealing';
   ball.className='sphere reveal-ball ball-'+colorFor(n);$('reveal-number').textContent=n;
-  overlay.setAttribute('aria-label','Salió el '+n+'. Toca fuera de la bola para continuar.');overlay.classList.remove('flying');overlay.hidden=false;$('app-shell').inert=true;overlay.focus();
+  overlay.setAttribute('aria-label','Salió el '+n+'. Toca fuera de la bola para continuar.');overlay.classList.remove('flying');overlay.hidden=false;overlay.animate([{opacity:0},{opacity:1}],{duration:300});$('app-shell').inert=true;overlay.focus();
   tone(660,.22);tone(880,.3,.14);announce(n);
   await new Promise(resolve=>{let done=false;const dismiss=e=>{if(done)return;if(e.type==='click'&&e.target.closest('#reveal-ball'))return;if(e.type==='keydown'&&!['Escape','Enter',' '].includes(e.key))return;e.preventDefault();done=true;overlay.removeEventListener('click',dismiss);overlay.removeEventListener('keydown',dismiss);resolve();};overlay.addEventListener('click',dismiss);overlay.addEventListener('keydown',dismiss);});
   phase='flying';const target=cells[n-1].getBoundingClientRect(),from=ball.getBoundingClientRect();overlay.classList.add('flying');
@@ -78,20 +81,22 @@ async function draw(){
   if(host.ended||host.called.length>=total()||activeView!=='host'||$('modal').open)return;
   if(spinning){if(phase==='mixing'){drum.kick();tone(210,.07);$('game-status').textContent='¡MÁS IMPULSO! '+drum.motor.turns+' CLICS';}return;}
   clearTimeout(autoTimer);spinning=true;phase='mixing';document.body.classList.add('busy');drum.motor.turns=0;drum.kick();renderHost();
-  const selected=nextBall(host.called,Math.random,total());const tick=setInterval(()=>tone(130+Math.random()*120,.055,0,'triangle',.035),110);
-  try{while(drum.motor.running)await sleep(45);clearInterval(tick);phase='extracting';renderHost();drum.extract(selected);host.called.push(selected);persistHost();renderHost(selected);await sleep(reducedMotion?100:1100);drum.exiting=null;await presentBall(selected);}
-  finally{clearInterval(tick);spinning=false;phase='idle';document.body.classList.remove('busy');$('app-shell').inert=false;$('draw-reveal').hidden=true;renderHost();$('draw').focus();}
+  const selected=nextBall(host.called,Math.random,total());
+  if(soundOn)void ensureAudio().then(ok=>{if(ok&&spinning&&phase==='mixing'&&soundOn){spinAudio?.stop();spinAudio=new SpinAudio(audioContext);}});
+  const tick=setInterval(()=>{if(soundOn&&!document.hidden&&audioContext?.state==='running'&&phase==='mixing'){spinAudio ||= new SpinAudio(audioContext);spinAudio.speed(drum.motor.speed);$('drum').dataset.spinAudio='running';}},50);
+  try{while(drum.motor.running)await sleep(45);clearInterval(tick);spinAudio?.stop();spinAudio=null;$('drum').dataset.spinAudio='stopped';phase='extracting';renderHost();drum.extract(selected);host.called.push(selected);persistHost();renderHost(selected);await sleep(reducedMotion?100:1100);drum.exiting=null;await presentBall(selected);}
+  finally{clearInterval(tick);spinAudio?.stop();spinAudio=null;spinning=false;phase='idle';document.body.classList.remove('busy');$('app-shell').inert=false;$('draw-reveal').hidden=true;renderHost();$('draw').focus();}
   if(host.called.length===total())stopAuto();else scheduleAuto();
 }
 $('draw').onclick=draw;
 $('auto').onchange=()=>{if($('auto').checked)draw();else stopAuto();};$('interval').onchange=scheduleAuto;
 $('history-order').onclick=()=>{openModal('<span class="modal-icon">◉</span><h2>Así salió la suerte.</h2><p>Orden de salida, de la primera bola a la última.</p><div id="history-balls" class="verify-list"></div>');$('history-balls').innerHTML=host.called.length?host.called.map(n=>sphere(n)).join(''):'<p>Aún no salió ninguna bola.</p>';};
-document.addEventListener('visibilitychange',()=>{drum.setActive(activeView==='host'&&!document.hidden);if(document.hidden&&$('auto').checked){stopAuto();toast('Sorteo automático pausado. Actívalo para continuar.');}});
+document.addEventListener('visibilitychange',()=>{drum.setActive(activeView==='host'&&!document.hidden);if(document.hidden){spinAudio?.stop();spinAudio=null;$('drum').dataset.spinAudio='paused';}else if(soundOn&&phase==='mixing')void ensureAudio();if(document.hidden&&$('auto').checked){stopAuto();toast('Sorteo automático pausado. Actívalo para continuar.');}});
 document.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.repeat&&activeView==='host'&&!$('modal').open&&(e.target===document.body||e.target===document.documentElement)){e.preventDefault();draw();}});
 async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();else toast('Instala la app para jugar sin la barra del navegador.');}catch{toast('Puedes instalar la app para verla en toda la pantalla.');}}
 $('fullscreen').onclick=fullscreen;$('play-fullscreen').onclick=fullscreen;
 $('new-round').onclick=()=>confirmNewGame();$('restart-round').onclick=()=>confirmNewGame(true);
-$('host-settings').onclick=()=>{openModal('<span class="modal-icon">⚙</span><h2>A tu ritmo.</h2><p>Los efectos y el narrador se controlan por separado. Los efectos están activados por defecto y suenan desde la primera interacción.</p><div class="settings-actions"><button id="settings-help" class="secondary-button">? Cómo jugar</button></div>');$('settings-help').onclick=showHelp;};
+$('host-settings').onclick=()=>{openModal('<span class="modal-icon">⚙</span><h2>A tu ritmo.</h2><p>Los efectos y el narrador se controlan por separado. Los efectos están activados por defecto y suenan desde la primera interacción.</p><div class="settings-actions"><button id="soft-motion" class="secondary-button">Animación: '+(reducedMotion?'suave':'completa')+'</button><button id="settings-help" class="secondary-button">? Cómo jugar</button></div>');$('settings-help').onclick=showHelp;$('soft-motion').onclick=()=>{reducedMotion=!reducedMotion;save('bingo-bongo:soft-motion',reducedMotion);document.body.dataset.motion=reducedMotion?'soft':'full';drum.reducedMotion=reducedMotion;$('soft-motion').textContent='Animación: '+(reducedMotion?'suave':'completa');};};
 function confirmNewGame(restart=false){
   if(spinning)return;
   openModal('<span class="modal-icon">↻</span><h2>'+(restart?'¿Reiniciar esta partida?':'Comenzar otra partida.')+'</h2><p>'+(restart?'Se borrarán las bolas sorteadas y el bombo volverá a estar lleno, con la misma modalidad.':'Comenzarás un sorteo vacío. Elige la modalidad para la nueva partida.')+'</p>'+(restart?'':'<label class="eyebrow" for="new-round-mode">MODALIDAD</label><select id="new-round-mode" class="round-mode"><option value="90">90 bolas</option><option value="75">75 bolas · BINGO</option></select>')+'<p class="setting-note">Cada jugador debe terminar su participación anterior y preparar sus cartones en su propio celular. El sorteo no está conectado a sus dispositivos.</p><div class="modal-actions"><button id="cancel-reset" class="secondary-button">Cancelar</button><button id="confirm-reset" class="dark-button">'+(restart?'Reiniciar partida':'Comenzar partida')+'</button></div>');
@@ -100,8 +105,8 @@ function confirmNewGame(restart=false){
 }
 function confetti(){
   clearTimeout(confettiTimer);const layer=$('confetti');($('modal').open?$('modal'):document.body).append(layer);layer.replaceChildren();
-  for(let i=0;i<150;i++){const el=document.createElement('i');el.className='confetto';el.style.cssText='left:'+Math.random()*100+'%;background:'+['#ed3545','#ffc629','#16a15e','#1761ef','#854ce6'][i%5]+';animation-delay:'+Math.random()*2+'s;animation-duration:'+(4+Math.random()*3)+'s;--drift:'+(Math.random()-.5)*400+'px;border-radius:'+(i%3===0?'50%':'2px');if(reducedMotion){el.style.animation='none';el.style.top=Math.random()*100+'%';el.style.transform='rotate('+Math.random()*180+'deg)';}layer.append(el);}
-  confettiTimer=setTimeout(()=>layer.replaceChildren(),11000);
+  for(let i=0;i<150;i++){const el=document.createElement('i');el.className='confetto';el.style.cssText='left:'+Math.random()*100+'%;background:'+['#ed3545','#ffc629','#16a15e','#1761ef','#854ce6'][i%5]+';border-radius:'+(i%3===0?'50%':'2px')+';animation:none';layer.append(el);const drift=(Math.random()-.5)*360,rotation=Math.random()*900+360,duration=(reducedMotion?6000:3400)+Math.random()*2200;el.animate([{transform:'translate3d(0,-30px,0) rotate3d(1,1,0,0deg)',opacity:0},{transform:'translate3d('+drift*.45+'px,45vh,0) rotate3d(1,1,0,'+rotation*.4+'deg)',opacity:1,offset:.43},{transform:'translate3d('+drift+'px,110vh,0) rotate3d(1,1,0,'+rotation+'deg)',opacity:.7}],{duration,delay:Math.random()*1600,easing:'linear',fill:'forwards'});}
+  confettiTimer=setTimeout(()=>layer.replaceChildren(),10500);
 }
 $('bingo').onclick=()=>{
   if(spinning||host.ended||!host.called.length)return;

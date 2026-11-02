@@ -1,9 +1,9 @@
 {
   "name": "bingo-bongo",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "private": true,
   "type": "module",
-  "description": "Bingo de 90 bolas con sorteo animado y cartones para el celular.",
+  "description": "Bingo de 75 y 90 bolas con bombo 3D, sonido de giro y cartones personalizables.",
   "scripts": {
     "start": "node server.mjs",
     "test": "node --test tests/*.test.mjs"

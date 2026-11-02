@@ -1,12 +1,12 @@
 # Bingo Bongo ✦
 
-Bingo de **75 y 90 bolas**: el bombo en la computadora y hasta seis cartones confirmados en cada celular.
+Bingo de **75 y 90 bolas**, con un bombo 3D y bolas esféricas iluminadas: el bombo en la computadora y hasta seis cartones confirmados en cada celular.
 
 **Jugar:** https://joaqx3wa.github.io/Bingo-Bongo/
 
 ## El sorteo
 
-Elige **Jugar bingo** y la modalidad antes de sacar la primera bola. Cada clic en **Girar el bombo** añade impulso: la jaula y sus pelotas siguen girando y frenan hasta detenerse. Luego una sola pelota sale por la ranura. La pelota grande se conserva sobre el fondo difuminado hasta hacer clic fuera, o pulsar Escape o Enter; después vuela al tablero. En modo automático, el siguiente turno se programa después de cerrar esa presentación.
+Elige **Jugar bingo** y la modalidad antes de sacar la primera bola. Cada clic en **Girar el bombo** añade impulso: la jaula 3D y sus esferas siguen girando, colisionan en tres dimensiones y frenan hasta detenerse. La manivela, los aros y las paletas interiores muestran el giro desde una cámara en perspectiva. Un sonido continuo de rodadura y golpeteos acompaña la velocidad del bombo. Luego una sola pelota sale por la ranura. La pelota grande se conserva sobre el fondo difuminado hasta hacer clic fuera, o pulsar Escape o Enter; después vuela al tablero. En modo automático, el siguiente turno se programa después de cerrar esa presentación.
 
 El bombo contiene una partícula por cada número aún disponible. No repite bolas y conserva el sorteo al recargar. **Nueva partida** y **Reiniciar partida** están siempre a la vista encima del bombo. Nueva partida permite elegir 75 o 90 bolas. Reiniciar vacía el tablero y vuelve a llenar el bombo conservando la modalidad. Ambas acciones piden confirmar antes de borrar el sorteo. Al finalizar, el botón principal también permite iniciar otra partida. **Invitar** comparte un QR con la modalidad elegida. Los **efectos de sonido** están activados por defecto y se habilitan automáticamente con la primera interacción que permite el navegador. El botón **Efectos** los silencia o activa. **Voz** controla el narrador de números de forma independiente y comienza desactivado. Se guardan ambas preferencias en este navegador. Al confirmar **¡BINGO!**, aparece confeti y, si los efectos están activos, se reproduce una fanfarria; el navegador y el volumen del dispositivo deben permitir audio.
 
@@ -18,9 +18,15 @@ El bombo contiene una partícula por cada número aún disponible. No repite bol
 4. Pulsa **Añadir otro cartón** para buscar y seleccionar otro. Puedes elegir hasta seis. Antes de confirmar puedes revisar y quitar los seleccionados.
 5. Pulsa **Confirmar y jugar** y confirma el conjunto. Esos cartones quedan bloqueados durante la participación y se guardan al recargar o cerrar el navegador. No es posible añadir, sustituir o quitar cartones mientras la participación esté activa.
 
-En la pantalla de juego, alterna entre tus cartones mediante las pestañas numeradas o las flechas. Al marcar o desmarcar un número, se aplica a **todos los cartones confirmados que tengan ese número**. La vista de juego se gira mediante CSS si el dispositivo está vertical, manteniendo el diseño horizontal sin depender del bloqueo de orientación del sistema.
+En la pantalla de juego, alterna entre tus cartones mediante las pestañas numeradas o las flechas. Al marcar o desmarcar un número, se aplica a **todos los cartones confirmados que tengan ese número**. El cartón de 75 bolas conserva su orientación vertical. El de 90 se muestra horizontal aunque sostengas el teléfono vertical. En ambos formatos, en la selección y al jugar, las casillas conservan exactamente el mismo ancho y alto; se ajusta el tamaño completo del cartón al espacio disponible.
 
 El menú ⋯ permite compartir o imprimir el cartón visible. **Terminar mi participación** requiere confirmación, finaliza ese conjunto y limpia sus marcas para preparar una participación nueva. No interrumpe el sorteo del anfitrión.
+
+## Colores y animaciones
+
+Cada cartón puede ser rojo, naranja, amarillo, verde, azul o violeta. Elige el color en la selección o cámbialo durante el juego desde el menú ⋯. El color se guarda por cartón y no altera sus números ni el bloqueo de la selección.
+
+Las animaciones completas están activadas por defecto, incluidos los overlays y el confeti en movimiento. En ajustes puedes elegir animación suave. La preferencia del sistema ya no detiene automáticamente las animaciones del juego.
 
 ## Formatos y premios
 
@@ -50,4 +56,4 @@ node --test tests/*.test.mjs
 
 Abre `http://localhost:4173`. Las pruebas cubren 10.000 cartones de 90 bolas, 3.000 de 75 bolas, sorteos sin repeticiones, conservación de pelotas, acumulación y frenado del giro, sesiones confirmadas, marcas comunes, premios, iconos y recursos sin conexión.
 
-Las tipografías y los sonidos son locales. No hay analítica. El generador QR se incluye en `vendor/` bajo licencia MIT. El service worker limita su caché a esta aplicación y respeta otros sitios del mismo dominio. Se respeta la preferencia de movimiento reducido: las partículas se muestran sin movimiento y el confeti como decoración estática.
+Las tipografías y los sonidos son locales. No hay analítica. El generador QR se incluye en `vendor/` bajo licencia MIT. El service worker limita su caché a esta aplicación y respeta otros sitios del mismo dominio. El bombo usa Three.js r180, incluido localmente bajo licencia MIT en vendor/. Se utiliza WebGL y se dispone de una proyección de respaldo para navegadores sin WebGL. Las animaciones suaves se eligen desde los ajustes de la aplicación.

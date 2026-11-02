@@ -5,7 +5,7 @@
   <meta name="theme-color" content="#1761ef"><meta name="description" content="Bingo Bongo: 90 bolas, un bombo lleno de emoción y tu cartón en toda la pantalla. Juega desde la computadora y el celular.">
   <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Bingo Bongo">
   <title>Bingo Bongo · ¡Que gire la suerte!</title>
-  <link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./icons/apple-touch-icon.png"><link rel="manifest" href="./manifest.webmanifest"><link rel="stylesheet" href="./style.css">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./icons/apple-touch-icon.png"><link rel="manifest" href="./manifest.webmanifest"><link rel="stylesheet" href="./style.css?v=4">
 </head>
 <body data-view="home">
   <div class="app-shell" id="app-shell">
@@ -30,6 +30,7 @@
     <main id="cards-view" class="screen cards-view" hidden>
       <div class="view-heading"><div><div class="eyebrow"><span class="color-dots"><i></i><i></i><i></i></span> LA FÁBRICA DE LA SUERTE</div><h1>Elige tus <span>cartones.</span></h1></div><select id="card-mode" aria-label="Tipo de cartón"><option value="90">90 bolas · 3 × 9</option><option value="75">75 bolas · BINGO 5 × 5</option></select></div>
       <div class="printer-strip" aria-hidden="true"><div><i></i><i></i><i></i></div><span id="printer-status">TUS QUINCE NÚMEROS DE LA SUERTE</span><span>▦</span></div>
+      <div class="ticket-palette-row"><span>Color del cartón</span><div id="card-palette" class="ticket-palette" aria-label="Elegir color del cartón"></div></div>
       <div id="selected-strip" class="selected-strip" aria-label="Tus cartones seleccionados"></div>
       <div class="card-choices" id="card-choices" aria-label="Cartones disponibles para elegir"></div>
       <div class="cards-controls"><div class="deck-pagination"><button id="prev-card" class="icon-button" aria-label="Cartón anterior">←</button><span id="card-page">Candidato 1</span><button id="next-card" class="icon-button" aria-label="Cartón siguiente">→</button></div><button id="generate" class="quiet-button">↻ Cambiar cartón</button><button id="choose-card" class="primary-button">Seleccionar cartón ✓</button><button id="add-card" class="quiet-button" hidden>＋ Añadir otro cartón</button></div>
@@ -43,6 +44,6 @@
   </div>
   <div id="draw-reveal" class="draw-reveal" hidden role="dialog" aria-modal="true" aria-label="Bola sorteada" tabindex="-1"><span class="reveal-eyebrow">¡AHÍ VIENE TU SUERTE!</span><div id="reveal-ball" class="sphere reveal-ball"><span id="reveal-number"></span></div><span class="reveal-caption">Toca fuera de la bola para continuar</span></div>
   <dialog id="modal"><button id="close-modal" class="close-modal" aria-label="Cerrar">×</button><div id="modal-content"></div></dialog><div id="toast" role="status" class="toast"></div><div id="confetti" aria-hidden="true"></div>
-  <script src="./vendor/qrcode.js"></script><script type="module" src="./app.js"></script>
+  <script src="./vendor/qrcode.js"></script><script type="module" src="./app.js?v=4"></script>
 </body>
 </html>
