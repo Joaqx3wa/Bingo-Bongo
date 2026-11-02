@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f3eb">
+  <meta name="description" content="Bingo Bongo: juega bingo de 90 bolas, gira el bombo y genera cartones para marcar desde tu celular. Gratis y sin cuentas.">
+  <title>Bingo Bongo · Que ruede la diversión</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#host" aria-label="Bingo Bongo, inicio"><span class="brand-icon" aria-hidden="true">b.</span><span>bingo<span class="brand-second">bongo<span class="brand-dot">®</span></span></span></a>
+      <nav class="mode-nav" aria-label="Modo de juego"><a href="#host" id="nav-host"><span aria-hidden="true">◉</span> El sorteo</a><a href="#cards" id="nav-cards"><span aria-hidden="true">▦</span> Mis cartones</a></nav>
+      <button class="icon-button help-button" id="help" aria-label="Cómo jugar">?</button>
+    </header>
+
+    <main id="host-view">
+      <div class="page-intro"><div><div class="eyebrow"><span class="live-dot"></span> EL PLAN ES PASARLA BIEN</div><h1>Que ruede la <span>diversión.</span><svg viewBox="0 0 52 52" aria-hidden="true"><path d="M26 3v46M3 26h46M10 10l32 32M10 42l32-32"/></svg></h1><p>Tú pones la gente. Nosotros ponemos la suerte.</p></div><div class="edition"><span>EL CLÁSICO DE SIEMPRE</span><strong>90 <small>bolas</small></strong><span>CON MUCHO MÁS RITMO ↗</span></div></div>
+
+      <div class="game-layout">
+        <section class="draw-panel" aria-labelledby="draw-title">
+          <div class="panel-top"><span class="pill"><span class="live-dot"></span> <span id="game-status">LISTOS PARA JUGAR</span></span><div class="draw-options"><button id="sound" class="small-icon" aria-label="Activar sonidos" aria-pressed="false">♫</button><button id="fullscreen" class="small-icon" aria-label="Pantalla completa">⛶</button></div></div>
+          <h2 id="draw-title" class="sr-only">Bombo de bingo</h2>
+          <div class="machine" id="machine"><span class="machine-spark spark-one" aria-hidden="true">✳</span><span class="machine-spark spark-two" aria-hidden="true">✦</span><div class="machine-ring"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="mini-ball mini-one">8</div><div class="mini-ball mini-two">24</div><div class="mini-ball mini-three">63</div><div class="mini-ball mini-four">90</div><div class="hero-ball" id="hero-ball"><span id="ball-kicker">TU PRÓXIMO</span><strong id="ball-number">?</strong><span id="ball-caption">NÚMERO DE LA SUERTE</span></div></div><div class="machine-base"><span></span><span></span><span></span></div></div>
+          <div class="draw-caption" id="draw-caption" aria-live="polite">Todo puede pasar en la siguiente bola.</div>
+          <button class="draw-button" id="draw"><span aria-hidden="true">↻</span><span id="draw-label">¡Girar el bombo!</span><span class="key-hint">ESPACIO</span></button>
+          <div class="auto-row"><label class="switch-label"><input id="auto" type="checkbox"><span class="switch" aria-hidden="true"></span> Sorteo automático</label><select id="interval" aria-label="Intervalo del sorteo automático"><option value="5">Cada 5 s</option><option value="8" selected>Cada 8 s</option><option value="12">Cada 12 s</option></select></div>
+          <div class="sound-note" id="sound-note">♫ Activa el sonido y súbele a la emoción.</div>
+        </section>
+
+        <section class="board-panel" aria-labelledby="board-title">
+          <div class="board-header"><div><div class="eyebrow">LA SUERTE VA DE TU LADO</div><h2 id="board-title">El tablero<span class="coral-dot">.</span></h2></div><div class="counter"><strong id="called-count">00</strong><span>/ 90 bolas</span></div></div>
+          <div class="board-legend"><span><i class="legend-dot drawn-dot"></i> Ya salió</span><span><i class="legend-dot latest-dot"></i> Última bola</span><span class="remaining" id="remaining">90 por salir</span></div>
+          <div class="number-board" id="number-board" aria-label="Tablero de números del 1 al 90"></div>
+          <div class="recent-heading"><h3>Las que ya salieron <span id="history-count">(0)</span></h3><button id="history-order" class="text-button" aria-label="Cambiar a orden numérico">Por salida ↓</button></div>
+          <div class="history" id="history"><p class="empty-history">El primer número está a un giro de distancia <span>↗</span></p></div>
+          <div class="board-bottom"><span id="board-hint">¿Alguien completó su cartón?</span><button id="bingo" class="bingo-button" disabled>¡BINGO! <span aria-hidden="true">✳</span></button></div>
+        </section>
+      </div>
+
+      <section class="join-banner"><div class="join-graphic" aria-hidden="true"><span>▦</span><i>✦</i></div><div><span class="eyebrow">UNA PANTALLA, MUCHAS GANAS DE GANAR</span><h2>El bombo en la compu.<br>Tu cartón en el celular.</h2><p>Comparte el enlace. Cada quien genera su cartón y marca sus números.</p></div><button id="invite" class="dark-button">Invitar a jugar <span aria-hidden="true">↗</span></button></section>
+      <div class="host-tools"><span>90 bolas · Cartones de 15 números · Sin registros</span><button id="new-game" class="text-button">↻ Nueva partida</button></div>
+    </main>
+
+    <main id="cards-view" hidden>
+      <div class="card-intro"><div class="eyebrow">UN CARTÓN. QUINCE OPORTUNIDADES.</div><h1>Tu suerte se <span>imprime.</span></h1><p>Escucha el número, toca para marcar y prepárate para gritar.</p></div>
+      <div class="cards-layout"><section class="printer-panel"><div class="printer-header"><span class="live-dot"></span> LA FÁBRICA DE LA SUERTE <span>✳</span></div><div class="printer-body"><div class="printer-display"><span>90 BOLAS / 15 NÚMEROS</span><strong id="printer-status">Tu cartón está listo.</strong><div class="printer-lights"><i></i><i></i><i></i></div></div><div class="printer-slot"></div></div><div id="ticket-output" class="ticket-output"></div><div class="printer-actions"><button id="generate" class="draw-button">＋ Imprimir nuevo cartón</button><p>Cada cartón es diferente. Tus marcas se guardan en este dispositivo.</p></div></section><aside class="card-sidebar"><div class="tip-card"><span class="tip-number">01</span><h2>La suerte se comparte.</h2><p>Abre el sorteo en una computadora. Tus amigos abren esta página en sus celulares y eligen «Mis cartones».</p><button id="share-card-page" class="dark-button">Compartir invitación ↗</button></div><div class="tip-card yellow-tip"><span class="tip-number">02</span><h2>¡Oído al número!</h2><p>Marca solo los que escuches. Una fila completa es línea; los 15 números, bingo. El anfitrión verifica y finaliza la partida.</p><span class="tip-small">Las marcas son manuales; no hay conexión en vivo entre dispositivos.</span></div><button id="print" class="print-link">▦ Imprimir mis cartones en papel</button></aside></div>
+    </main>
+    <footer><span class="footer-brand">bingo bongo<span>✳</span></span><span>Hecho para reunirse. Y para gritar un poquito.</span><a href="https://github.com/Joaqx3wa/Bingo-Bongo" target="_blank" rel="noopener noreferrer">GitHub ↗</a></footer>
+  </div>
+  <dialog id="modal"><button id="close-modal" class="close-modal" aria-label="Cerrar">×</button><div id="modal-content"></div></dialog>
+  <div id="toast" role="status" class="toast"></div><div id="confetti" aria-hidden="true"></div>
+  <script src="./vendor/qrcode.js"></script><script type="module" src="./app.js"></script>
+</body>
+</html>
