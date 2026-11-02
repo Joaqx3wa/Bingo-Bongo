@@ -25,21 +25,50 @@ export class DrumModel {
   }
   remove(n){const index=this.balls.findIndex(b=>b.n===n);return index<0?null:this.balls.splice(index,1)[0];}
   step(dt,mixing){
-    dt=Math.min(dt,1/30);const omega=typeof mixing==='number'?mixing:mixing?2.5:0;this.angle+=dt*omega;
-    const turn=dt*omega*.58,cos=Math.cos(turn),sin=Math.sin(turn);
-    for(const b of this.balls){
-      if(omega>.05){const y=b.y;b.y=y*cos-b.z*sin;b.z=y*sin+b.z*cos;b.vy-=b.z*omega*dt*1.1;b.vz+=b.y*omega*dt*1.1;b.rotation+=turn;}
-      b.vy-=285*dt;b.vx*=.994;b.vy*=.994;b.vz*=.994;const speed=Math.hypot(b.vx,b.vy,b.vz);if(speed>420){b.vx*=420/speed;b.vy*=420/speed;b.vz*=420/speed;}
-      b.x+=b.vx*dt;b.y+=b.vy*dt;b.z+=b.vz*dt;
-    }
-    for(let pass=0;pass<3;pass++){
-      for(let i=0;i<this.balls.length;i++)for(let j=i+1;j<this.balls.length;j++){
-        const a=this.balls[i],b=this.balls[j],dx=b.x-a.x,dy=b.y-a.y,dz=b.z-a.z,d=Math.hypot(dx,dy,dz);
-        if(d<32&&d>.0001){const nx=dx/d,ny=dy/d,nz=dz/d,overlap=(32-d)/2;a.x-=nx*overlap;a.y-=ny*overlap;a.z-=nz*overlap;b.x+=nx*overlap;b.y+=ny*overlap;b.z+=nz*overlap;
-          const relative=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny+(b.vz-a.vz)*nz;if(relative<0){const impulse=relative*.73;a.vx+=impulse*nx;a.vy+=impulse*ny;a.vz+=impulse*nz;b.vx-=impulse*nx;b.vy-=impulse*ny;b.vz-=impulse*nz;}
+    const duration=Math.min(Math.max(dt,0),1/15),omega=typeof mixing==='number'?mixing:mixing?2.5:0;
+    const steps=Math.max(1,Math.ceil(duration*120)),h=duration/steps;
+    for(let sub=0;sub<steps;sub++){
+      this.angle+=h*omega;
+      const cos=Math.cos(this.angle),sin=Math.sin(this.angle),drag=Math.exp(-.16*h);
+      for(const b of this.balls){
+        b.vy-=680*h;b.vx*=drag;b.vy*=drag;b.vz*=drag;
+        const speed=Math.hypot(b.vx,b.vy,b.vz);if(speed>780){b.vx*=780/speed;b.vy*=780/speed;b.vz*=780/speed;}
+        b.x+=b.vx*h;b.y+=b.vy*h;b.z+=b.vz*h;b.rotation+=Math.hypot(b.vx,b.vz)*h*.025;
+      }
+      for(let pass=0;pass<3;pass++){
+        for(let i=0;i<this.balls.length;i++)for(let j=i+1;j<this.balls.length;j++){
+          const a=this.balls[i],b=this.balls[j],dx=b.x-a.x,dy=b.y-a.y,dz=b.z-a.z,d=Math.hypot(dx,dy,dz);
+          if(d<32&&d>.0001){
+            const nx=dx/d,ny=dy/d,nz=dz/d,overlap=(32-d)*.505;
+            a.x-=nx*overlap;a.y-=ny*overlap;a.z-=nz*overlap;b.x+=nx*overlap;b.y+=ny*overlap;b.z+=nz*overlap;
+            const rvx=b.vx-a.vx,rvy=b.vy-a.vy,rvz=b.vz-a.vz,normal=rvx*nx+rvy*ny+rvz*nz;
+            if(normal<0){const impulse=normal*(Math.abs(normal)>25?.74:.5);a.vx+=impulse*nx;a.vy+=impulse*ny;a.vz+=impulse*nz;b.vx-=impulse*nx;b.vy-=impulse*ny;b.vz-=impulse*nz;
+              const tx=(rvx-normal*nx)*.018,ty=(rvy-normal*ny)*.018,tz=(rvz-normal*nz)*.018;a.vx+=tx;a.vy+=ty;a.vz+=tz;b.vx-=tx;b.vy-=ty;b.vz-=tz;
+            }
+          }
+        }
+        for(const b of this.balls){
+          // Gravity stays in world space. Only contact with moving metal transfers rotation.
+          for(const side of [-1,1]){
+            const lx=b.x,ly=b.y*cos+b.z*sin,lz=-b.y*sin+b.z*cos;
+            const qx=Math.max(-112.5,Math.min(112.5,lx)),qy=Math.max(side*149-3,Math.min(side*149+3,ly)),qz=Math.max(-13.5,Math.min(13.5,lz));
+            let dx=lx-qx,dy=ly-qy,dz=lz-qz,d=Math.hypot(dx,dy,dz);
+            if(d<16){if(d<.0001){dy=-side;dx=0;dz=0;d=1;}const nx=dx/d,ny=(dy*cos-dz*sin)/d,nz=(dy*sin+dz*cos)/d,penetration=16-d;
+              b.x+=nx*penetration;b.y+=ny*penetration;b.z+=nz*penetration;
+              this.surfaceContact(b,nx,ny,nz,omega,.46,.20,h);
+            }
+          }
+          const distance=Math.hypot(b.x,b.y,b.z);
+          if(distance>156){const nx=-b.x/distance,ny=-b.y/distance,nz=-b.z/distance;b.x=-nx*156;b.y=-ny*156;b.z=-nz*156;this.surfaceContact(b,nx,ny,nz,omega,.20,.32,h);}
         }
       }
-      for(const b of this.balls){const distance=Math.hypot(b.x,b.y,b.z);if(distance>156){const nx=b.x/distance,ny=b.y/distance,nz=b.z/distance;b.x=nx*156;b.y=ny*156;b.z=nz*156;const outward=b.vx*nx+b.vy*ny+b.vz*nz;if(outward>0){b.vx-=1.5*outward*nx;b.vy-=1.5*outward*ny;b.vz-=1.5*outward*nz;}}}
+    }
+  }
+  surfaceContact(b,nx,ny,nz,omega,friction,restitution,dt){
+    const wallY=-omega*b.z,wallZ=omega*b.y,rvx=b.vx,rvy=b.vy-wallY,rvz=b.vz-wallZ,normal=rvx*nx+rvy*ny+rvz*nz;
+    if(normal<0){const bounce=Math.abs(normal)<30?0:restitution,impulse=-(1+bounce)*normal;b.vx+=impulse*nx;b.vy+=impulse*ny;b.vz+=impulse*nz;
+      const tx=rvx-normal*nx,ty=rvy-normal*ny,tz=rvz-normal*nz,tangent=Math.hypot(tx,ty,tz);
+      if(tangent>.001){const grip=Math.min(tangent,friction*(impulse+680*dt)) / tangent;b.vx-=tx*grip;b.vy-=ty*grip;b.vz-=tz*grip;}
     }
   }
 }

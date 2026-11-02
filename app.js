@@ -1,8 +1,8 @@
-import { nextBall, makeCard, cardProgress, validHostState } from './game.js?v=4';
-import { colorFor } from './drum.js?v=4';
-import { DrumRenderer } from './drum-3d.js?v=4';
-import { SpinAudio } from './spin-audio.js?v=4';
-import { setupPlayer } from './player-ui.js?v=4';
+import { nextBall, makeCard, cardProgress, validHostState } from './game.js?v=5';
+import { colorFor } from './drum.js?v=5';
+import { DrumRenderer } from './drum-3d.js?v=5';
+import { SpinAudio } from './spin-audio.js?v=5';
+import { setupPlayer } from './player-ui.js?v=5';
 const $ = id => document.getElementById(id);
 const HOST_KEY='bingo-bongo:90:host';
 let reducedMotion=read('bingo-bongo:soft-motion',false)===true;
@@ -16,7 +16,21 @@ const audioPrefs=read(AUDIO_KEY,{});soundOn=typeof audioPrefs.effects==='boolean
 let host=read(HOST_KEY,{called:[],ended:false});if(!validHostState(host))host={called:[],ended:false};
 host.mode=host.mode===75?75:90;
 const total=()=>host.mode;
+const drumHome=$('drum').parentElement;
 const drum=new DrumRenderer($('drum'),host.called,reducedMotion,total());drum.describe();
+let focusOnSpin=read('bingo-bongo:drum-focus',false)===true;
+function syncFocusOption(){ $('focus-option').setAttribute('aria-pressed',String(focusOnSpin));$('auto-drum-focus').checked=focusOnSpin; }
+function setFocusOption(value){focusOnSpin=value;save('bingo-bongo:drum-focus',value);syncFocusOption();}
+function openDrumFocus(){
+  if(activeView!=='host'||$('modal').open||phase==='revealing'||phase==='flying')return;
+  const overlay=$('drum-focus');if(!overlay.hidden)return;overlay.hidden=false;drum.attachTo($('drum-focus-stage'));$('app-shell').inert=true;overlay.animate([{opacity:0},{opacity:1}],{duration:250});overlay.querySelector('section').animate([{transform:'scale(.92) translateY(15px)'},{transform:'scale(1) translateY(0)'}],{duration:320,easing:'cubic-bezier(.2,.9,.3,1)'});$('close-drum-focus').focus();
+}
+function closeDrumFocus(refocus=true){const overlay=$('drum-focus');if(overlay.hidden)return;overlay.hidden=true;drum.attachTo(drumHome);$('app-shell').inert=false;if(refocus)$('draw').focus();}
+$('zoom-drum').onclick=openDrumFocus;$('close-drum-focus').onclick=()=>closeDrumFocus();$('focus-option').onclick=()=>{setFocusOption(!focusOnSpin);if(focusOnSpin)openDrumFocus();};$('auto-drum-focus').onchange=()=>setFocusOption($('auto-drum-focus').checked);
+$('drum-focus').onclick=e=>{if(e.target===$('drum-focus'))closeDrumFocus();};$('drum-focus').onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeDrumFocus();}};
+$('focus-spin').onclick=draw;
+drum.canvas.tabIndex=0;drum.canvas.setAttribute('role','button');drum.canvas.title='Pulsa para girar o añadir impulso';drum.canvas.onclick=e=>{if(drum.hitTest(e.clientX,e.clientY))draw();else closeDrumFocus();};drum.canvas.onkeydown=e=>{if(e.code==='Space'||e.key==='Enter'){e.preventDefault();e.stopPropagation();draw();}};
+syncFocusOption();
 function toast(message){$('toast').textContent=message;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),4300);}
 function persistHost(){save(HOST_KEY,host);}
 
@@ -60,7 +74,7 @@ function renderHost(pending=null){
   $('game-status').textContent=spinning?'LA SUERTE ESTÁ GIRANDO…':host.ended?'PARTIDA FINALIZADA':host.called.length===total()?'SALIERON LAS '+total()+' BOLAS':latest?'LA SUERTE ESTÁ EN JUEGO':'TODO LISTO PARA EMPEZAR';
   $('draw').disabled=(spinning&&phase!=='mixing')||(!host.ended&&host.called.length===total());$('new-round').disabled=spinning;$('restart-round').disabled=spinning||!host.called.length;
   $('draw-label').textContent=spinning?(phase==='mixing'?'¡Más clics, más giros!':'¡Ahí viene la suerte!'):host.ended?'¡Nueva partida!':host.called.length===total()?'Las '+total()+' están fuera':'¡Girar el bombo!';
-  $('bingo').disabled=spinning||host.ended||!host.called.length;
+  $('bingo').disabled=spinning||host.ended||!host.called.length;$('zoom-drum').disabled=spinning&&phase!=='mixing';$('focus-option').disabled=spinning;$('focus-spin').disabled=$('draw').disabled;$('focus-spin').textContent=spinning&&phase==='mixing'?'↻ ¡Más impulso!':host.ended?'Nueva partida':'↻ Girar el bombo';$('focus-drum-count').textContent=(total()-host.called.length)+' bolas dentro';
   $('auto').disabled=host.ended||host.called.length===total();
   $('host-settings').disabled=spinning;$('host-mode').disabled=spinning||(!host.ended&&host.called.length>0);
   if(!pending){$('last-ball').className=latest?`sphere ball-${colorFor(latest)}`:'last-ball-placeholder';$('last-ball').innerHTML=latest?`<span>${latest}</span>`:'—';$('last-caption').textContent=host.ended?'¡Qué buena partida!':latest?'¡Busca y marca!':'¿Será la tuya?';}
@@ -77,15 +91,15 @@ async function presentBall(n){
   overlay.hidden=true;overlay.classList.remove('flying');$('app-shell').inert=false;
 }
 async function draw(){
-  if(host.ended){confirmNewGame();return;}
+  if(host.ended){closeDrumFocus(false);confirmNewGame();return;}
   if(host.ended||host.called.length>=total()||activeView!=='host'||$('modal').open)return;
   if(spinning){if(phase==='mixing'){drum.kick();tone(210,.07);$('game-status').textContent='¡MÁS IMPULSO! '+drum.motor.turns+' CLICS';}return;}
-  clearTimeout(autoTimer);spinning=true;phase='mixing';document.body.classList.add('busy');drum.motor.turns=0;drum.kick();renderHost();
+  clearTimeout(autoTimer);spinning=true;phase='mixing';document.body.classList.add('busy');drum.motor.turns=0;drum.kick();renderHost();if(focusOnSpin)openDrumFocus();
   const selected=nextBall(host.called,Math.random,total());
   if(soundOn)void ensureAudio().then(ok=>{if(ok&&spinning&&phase==='mixing'&&soundOn){spinAudio?.stop();spinAudio=new SpinAudio(audioContext);}});
   const tick=setInterval(()=>{if(soundOn&&!document.hidden&&audioContext?.state==='running'&&phase==='mixing'){spinAudio ||= new SpinAudio(audioContext);spinAudio.speed(drum.motor.speed);$('drum').dataset.spinAudio='running';}},50);
-  try{while(drum.motor.running)await sleep(45);clearInterval(tick);spinAudio?.stop();spinAudio=null;$('drum').dataset.spinAudio='stopped';phase='extracting';renderHost();drum.extract(selected);host.called.push(selected);persistHost();renderHost(selected);await sleep(reducedMotion?100:1100);drum.exiting=null;await presentBall(selected);}
-  finally{clearInterval(tick);spinAudio?.stop();spinAudio=null;spinning=false;phase='idle';document.body.classList.remove('busy');$('app-shell').inert=false;$('draw-reveal').hidden=true;renderHost();$('draw').focus();}
+  try{while(drum.motor.running)await sleep(45);clearInterval(tick);spinAudio?.stop();spinAudio=null;$('drum').dataset.spinAudio='stopped';phase='extracting';renderHost();drum.extract(selected);host.called.push(selected);persistHost();renderHost(selected);await sleep(reducedMotion?100:1100);drum.exiting=null;closeDrumFocus(false);await presentBall(selected);}
+  finally{clearInterval(tick);spinAudio?.stop();spinAudio=null;spinning=false;phase='idle';closeDrumFocus(false);document.body.classList.remove('busy');$('app-shell').inert=false;$('draw-reveal').hidden=true;renderHost();$('draw').focus();}
   if(host.called.length===total())stopAuto();else scheduleAuto();
 }
 $('draw').onclick=draw;
@@ -136,6 +150,6 @@ function route(){
   document.body.dataset.view=activeView;$('back').hidden=activeView==='home'||activeView==='play';$('back').href='#home';$('back-label').textContent='Inicio';
   document.querySelector('.brand').setAttribute('aria-disabled',String(activeView==='play'));document.querySelector('.brand').tabIndex=activeView==='play'?-1:0;
   document.title=activeView==='play'?'Mis cartones confirmados · Bingo Bongo':activeView==='host'?'El sorteo · Bingo Bongo':activeView==='cards'?'Elegir cartones · Bingo Bongo':'Bingo Bongo · ¡Que gire la suerte!';
-  if(activeView!=='host')stopAuto();drum.setActive(activeView==='host'&&!document.hidden);
+  if(activeView!=='host'){stopAuto();closeDrumFocus(false);}drum.setActive(activeView==='host'&&!document.hidden);
 }
 window.addEventListener('hashchange',route);renderHost();route();

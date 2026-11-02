@@ -1,6 +1,6 @@
-import {makeCard,cardProgress} from './game.js?v=4';
-import {TICKET_COLORS,fitTicket} from './ticket-layout.js?v=4';
-import {createSession,validSession,toggleSessionNumber,cardMarks} from './player-session.js?v=4';
+import {makeCard,cardProgress} from './game.js?v=5';
+import {TICKET_COLORS,fitTicket} from './ticket-layout.js?v=5';
+import {createSession,validSession,toggleSessionNumber,cardMarks} from './player-session.js?v=5';
 
 export function setupPlayer({$,read,save,toast,openModal,closeModal,tone,chime,confetti,showInvite}){
   const DRAFT='bingo-bongo:draft:v3',SESSION='bingo-bongo:session:v3';

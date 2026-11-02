@@ -1,4 +1,4 @@
-import { makeCard } from './game.js?v=4';
+import { makeCard } from './game.js?v=5';
 export function createSession(ids,mode){
   if(![75,90].includes(mode)||ids.length<1||ids.length>6||new Set(ids).size!==ids.length||ids.some(id=>!/^[A-F0-9]{10}$/.test(id)))throw Error('Selección inválida');
   return {ids:[...ids],mode,marks:[],locked:true,index:0,startedAt:Date.now()};

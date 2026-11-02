@@ -1,6 +1,6 @@
-const CACHE='bingo-bongo-v4-webgl-1';
+const CACHE='bingo-bongo-v5-focus-physics-1';
 const BASE_FILES=['./','./index.html','./style.css','./app.js','./game.js','./drum.js','./drum-3d.js','./spin-audio.js','./ticket-layout.js','./vendor/three.module.min.js','./vendor/three.core.min.js','./player-ui.js','./player-session.js','./vendor/qrcode.js','./manifest.webmanifest','./favicon.svg','./icons/icon-192.png','./icons/icon-512.png','./icons/icon-maskable-512.png','./icons/apple-touch-icon.png'];
-const FILES=BASE_FILES.flatMap(file=>!file.includes('/vendor/')&&(file.endsWith('.js')||file.endsWith('.css'))?[file,file+'?v=4']:[file]);
+const FILES=BASE_FILES.flatMap(file=>!file.includes('/vendor/')&&(file.endsWith('.js')||file.endsWith('.css'))?[file,file+'?v=5']:[file]);
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('bingo-bongo-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));});
 // Network first keeps published updates fresh; the complete app is cached for offline play.
